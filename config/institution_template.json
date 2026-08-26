@@ -1,0 +1,33 @@
+{
+  "institution": "Example Institution",
+  "institution_type": "bank",
+  "country": "",
+  "source_priority": [
+    "official_ratings_page",
+    "official_funding_page",
+    "investor_presentation",
+    "annual_report",
+    "regulatory_filing",
+    "reputable_news"
+  ],
+  "target_metrics": [
+    "ratings",
+    "capital",
+    "asset_quality",
+    "profitability",
+    "funding_structure",
+    "funding_programmes",
+    "currency_mix",
+    "maturity_profile",
+    "sector_exposure",
+    "recent_issuance"
+  ],
+  "quality_policy": {
+    "minimum_reliability_score": 9.0,
+    "missing_beats_guessed": true,
+    "require_reporting_period": true,
+    "require_source_provenance": true,
+    "flag_stale_core_ir_after_days": 180
+  },
+  "notes": "Clone this config per institution. High-reliability extraction still requires validated patterns/table mappings for each source family."
+}

@@ -2,6 +2,8 @@ name: KDB public-data pipeline
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '15 1 * * *'
   pull_request:
   push:
     branches: [main, kdb-auto-pipeline]
@@ -28,6 +30,8 @@ jobs:
         run: python -m src.provenance_fixups
       - name: Enrich RM business intelligence
         run: python -m src.rm_intelligence_enrichment
+      - name: Discover latest official sources and 2026 updates
+        run: python -m src.latest_source_overlay
       - name: Render RM brief
         run: python -m src.rm_brief
       - name: Export verified snapshot for web/mobile

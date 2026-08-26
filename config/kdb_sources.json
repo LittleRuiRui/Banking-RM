@@ -1,0 +1,22 @@
+{
+  "client": "Korea Development Bank",
+  "source_pages": [
+    {
+      "name": "Annual Reports",
+      "url": "https://www.kdb.co.kr/BZCOWS00N00.act?_mnuId=IHIHEN0024&wcmsPath=%2Fhmp%2Fch%2Fgl%2Fir%2FCHGLIR0100.html",
+      "keywords": ["annual report", "annual", "report"]
+    },
+    {
+      "name": "Funding Programmes",
+      "url": "https://www.kdb.co.kr/BZCOWS00N00.act?_mnuId=IHIHEN0073&wcmsPath=%2Fhmp%2Fch%2Fgl%2Fir%2FCHGLIR0700.html",
+      "keywords": ["gmt", "uscp", "ecp", "funding", "programme"]
+    }
+  ],
+  "seed_pdfs": [
+    {
+      "name": "Investor Presentation 2025",
+      "url": "https://www.kdb.co.kr/wcmscontents/pdf/IR_Presentation_2025.pdf",
+      "kind": "investor_presentation"
+    }
+  ]
+}

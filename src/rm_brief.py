@@ -59,6 +59,32 @@ def quality_warnings(s):
     return "\n".join(f"- **{x.get('severity','warning').upper()} — {x.get('check','check')}:** {x.get('detail','')}" for x in flags)
 
 
+def rm_intelligence_section(s):
+    r=s.get("rm_intelligence") or {}
+    if not r: return "RM-intelligence enrichment not available."
+    f=r.get("funding_structure",{}); x=r.get("foreign_currency_funding",{}); sec=r.get("sector_exposure",{}); deal=r.get("recent_issuance",{}); out=r.get("funding_outlook",{}); liq=r.get("liquidity_commitment",{})
+    lines=[]
+    if f:
+        lines += ["### Funding structure", f"- Wholesale funding: **{f.get('wholesale_funding_pct','n/a')}%** of funding.", f"- KRW Industrial Finance Bonds: **{f.get('krw_industrial_bonds_pct','n/a')}%**; foreign-currency Industrial Finance Bonds: **{f.get('foreign_currency_industrial_bonds_pct','n/a')}%**.", f"- KRW deposits: **{f.get('krw_deposits_pct','n/a')}%**; foreign-currency deposits: **{f.get('foreign_currency_deposits_pct','n/a')}%**; borrowings: **{f.get('borrowings_pct','n/a')}%**."]
+    if x:
+        lines += ["", "### Foreign-currency funding profile", f"- 2020–2024 foreign-currency bond issuance: **US${x.get('five_year_fx_bond_issuance_usd_bn','n/a')}bn**.", f"- Currency mix: USD **{x.get('usd_share_pct','n/a')}%**, BRL {x.get('brl_share_pct','n/a')}%, EUR {x.get('eur_share_pct','n/a')}%, CNH {x.get('cnh_share_pct','n/a')}%, AUD {x.get('aud_share_pct','n/a')}%, CHF {x.get('chf_share_pct','n/a')}%, others {x.get('other_currency_share_pct','n/a')}%.", f"- Typical annual benchmark strategy: **{x.get('benchmark_bonds_per_year_min','n/a')}–{x.get('benchmark_bonds_per_year_max','n/a')} USD/EUR benchmark bonds**, typical size **US${x.get('benchmark_size_usd_bn_min','n/a')}–{x.get('benchmark_size_usd_bn_max','n/a')}bn**."]
+    if out:
+        lines += [f"- 2025 total funding target: **US${out.get('2025_total_funding_target_usd_bn_equiv','n/a')}bn equivalent**."]
+    if liq:
+        lines += [f"- Liquidity commitment: about **{liq.get('usd_benchmarks_per_year','n/a')} USD benchmarks/year**; more than **{liq.get('usd_public_trade_investors_2024_min','n/a')} investors** bought 2024 USD public trades."]
+    if deal:
+        tr=", ".join(f"{z['tenor']} {z['type']} US${z['size_usd_bn']:g}bn" for z in deal.get("tranches",[]))
+        lines += ["", "### Recent issuance example", f"- 23 Jan 2025: **US${deal.get('total_size_usd_bn','n/a')}bn** senior unsecured transaction — {tr}."]
+    if sec:
+        lines += ["", "### Operating / sector exposure", f"- Manufacturing **{sec.get('manufacturing_pct','n/a')}%**; Finance & Insurance **{sec.get('finance_insurance_pct','n/a')}%**; Transportation **{sec.get('transportation_pct','n/a')}%**; Utilities **{sec.get('utilities_pct','n/a')}%**; Others **{sec.get('others_pct','n/a')}%**."]
+    signals=r.get("signals",[])
+    if signals:
+        lines += ["", "### RM signals"]
+        for z in signals:
+            lines.append(f"- **{z.get('priority','').upper()} — {z.get('type','signal')}:** {z.get('fact')} **RM angle:** {z.get('rm_angle')}")
+    return "\n".join(lines)
+
+
 def render(s):
     m=s["metrics"]; q=s.get("data_quality",{})
     defs=[("CET1","cet1_ratio_pct",fmt_pct),("BIS capital ratio","capital_adequacy_ratio_pct",fmt_pct),("NPL ratio","npl_ratio_pct",fmt_pct),("ROE","roe_pct",fmt_pct),("ROA","roa_pct",fmt_pct),("GMTN","gmt_programme_usd_bn",fmt_bn),("USCP","uscp_programme_usd_bn",fmt_bn),("ECP","ecp_programme_usd_bn",fmt_bn)]
@@ -85,12 +111,15 @@ def render(s):
 ### Data-quality warnings
 {quality_warnings(s)}
 
-## 2. Evidence ledger
+## 2. RM Business Intelligence
+{rm_intelligence_section(s)}
+
+## 3. Evidence ledger
 | Fact | Method | Reporting period | Page | Section | Evidence / formula inputs |
 |---|---|---|---:|---|---|
 {evidence_rows(s)}
 
-## 3. Opportunity Intelligence
+## 4. Opportunity Intelligence
 ### Offshore funding / DCM
 Recurring international funding creates DCM, bond-investment, bilateral, money-market and FX/CCS opportunities. **Trigger:** benchmark issuance, maturity concentration, funding-cost or currency-mix shift.
 
@@ -100,19 +129,19 @@ KDB's policy mandate and Korean corporate franchise can create overseas financin
 ### Relationship diversification
 Discover what KDB actually values when allocating wallet to external banks. **Trigger:** change in preferred counterparties, regions, currencies or product mix.
 
-## 4. Meeting Discovery Playbook
+## 5. Meeting Discovery Playbook
 | Objective | Opening question | Follow-up | Listen for | Potential angle |
 |---|---|---|---|---|
 {disc}
 
-## 5. RM next action
+## 6. RM next action
 1. Pick only 2–3 discovery objectives.
 2. Start from one verified public fact.
 3. Record timing / size / currency / sector / geography / decision maker / incumbent bank / next step.
 4. Convert each answer into Monitor / Internal follow-up / Pitch / No action.
 5. Do not use a metric carrying a consistency warning in a credit decision until manually verified.
 
-## 6. Sources
+## 7. Sources
 {sources}
 """
 

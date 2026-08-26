@@ -72,16 +72,16 @@ def parse_dec_funding_strategy(page: str) -> dict:
 
 
 def parse_dec_track_record(page: str) -> dict:
+    """Keep only explicitly labelled track-record facts.
+
+    The chart's historical bars are intentionally not converted into annual values because
+    PDF text ordering can scramble labels and bars. The explicit 2025 target is safe; the
+    achieved amount is taken from the separately labelled funding-details table instead.
+    """
     t = compact(page)
     if "Foreign Currency Funding Track Record" not in t:
         return {}
-    m = re.search(r"2015 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025", t)
-    vals = [float(x.replace(",", "")) for x in re.findall(r"\b(\d{1,2},\d{3})\b", t[:m.start()] if m else "")]
-    # Only accept 2025 if the final sequence clearly contains the full 2015-2025 series.
     out = {}
-    if m and len(vals) >= 11:
-        series = vals[-11:]
-        out["active_fx_funding_2025_usd_bn"] = round(series[-1] / 1000, 3)
     if re.search(r"Funding Target 2025:\s*USD\s*10bn", t, re.I): out["2025_target_usd_bn_equiv"] = 10.0
     return out
 

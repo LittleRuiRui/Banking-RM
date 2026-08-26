@@ -22,6 +22,8 @@ jobs:
         run: pytest -q
       - name: Collect KDB public data
         run: python -m src.kdb_pipeline
+      - name: Enrich coverage and run consistency controls
+        run: python -m src.coverage_enrichment
       - name: Render RM brief
         run: python -m src.rm_brief
       - name: Upload generated outputs

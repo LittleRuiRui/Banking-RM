@@ -5,7 +5,7 @@
       "name": "Annual Reports",
       "url": "https://www.kdb.co.kr/BZCOWS00N00.act?_mnuId=IHIHEN0024&wcmsPath=%2Fhmp%2Fch%2Fgl%2Fir%2FCHGLIR0100.html",
       "keywords": ["2025 annual report"],
-      "reporting_period": "2025"
+      "reporting_period": "FY2025"
     }
   ],
   "authoritative_html": [
@@ -36,7 +36,8 @@
       "name": "Investor Presentation December 2025",
       "url": "https://www.kdb.co.kr/wcmscontents/pdf/IR_Presentation_2025.pdf",
       "kind": "investor_presentation",
-      "reporting_period": "2025-12"
+      "reporting_period": "1H25",
+      "publication_period": "2025-12"
     }
   ]
 }

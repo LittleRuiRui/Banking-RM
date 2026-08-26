@@ -1,0 +1,9 @@
+{
+  "name": "FI RM Intelligence",
+  "short_name": "RM Intel",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#101827",
+  "description": "Institutional / FI RM credit, opportunity and meeting intelligence."
+}

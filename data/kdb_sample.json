@@ -1,0 +1,38 @@
+{
+  "client": "Korea Development Bank",
+  "as_of": "2026-08-26",
+  "credit": {
+    "overall": "Strong / sovereign-linked",
+    "ownership": "100% Government of Korea",
+    "ratings": {
+      "Moody's": "Aa2 / Stable",
+      "S&P": "AA / Stable",
+      "Fitch": "AA- / Stable"
+    },
+    "watch_items": [
+      "Government support / sovereign rating",
+      "Capital adequacy and policy-driven balance-sheet growth",
+      "Asset quality in policy-sensitive sectors",
+      "Foreign-currency wholesale funding and maturity profile"
+    ]
+  },
+  "funding": {
+    "gmt_programme_usd_bn": 30,
+    "uscp_programme_usd_bn": 5,
+    "ecp_programme_usd_bn": 12
+  },
+  "opportunities": [
+    {
+      "theme": "USD / multi-currency funding",
+      "priority": "High",
+      "possible_products": ["DCM", "Bond investment", "Bilateral funding", "Money market", "FX / CCS"],
+      "trigger": "New benchmark issuance, maturity wall, relative funding-cost change"
+    },
+    {
+      "theme": "Overseas project / syndicated finance",
+      "priority": "High",
+      "possible_products": ["Syndication", "Project Finance", "Risk participation", "Guarantee"],
+      "trigger": "KDB-linked Korean corporate expansion in ASEAN / US"
+    }
+  ]
+}

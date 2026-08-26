@@ -1,0 +1,46 @@
+name: KDB public-data pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 1 * * *'
+  pull_request:
+  push:
+    branches: [main, kdb-auto-pipeline]
+
+jobs:
+  test-and-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+      - name: Unit tests
+        run: pytest -q
+      - name: Collect KDB public data
+        run: python -m src.kdb_pipeline
+      - name: Enrich coverage and run consistency controls
+        run: python -m src.coverage_enrichment
+      - name: Correct metric provenance periods
+        run: python -m src.provenance_fixups
+      - name: Enrich RM business intelligence
+        run: python -m src.rm_intelligence_enrichment
+      - name: Discover latest official sources and 2026 updates
+        run: python -m src.latest_source_overlay
+      - name: Render RM brief
+        run: python -m src.rm_brief
+      - name: Export verified snapshot for web/mobile
+        run: python -m src.web_export
+      - name: Upload generated outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: kdb-rm-intelligence
+          path: |
+            data/kdb_public_snapshot.json
+            reports/kdb_auto_brief.md
+            web/

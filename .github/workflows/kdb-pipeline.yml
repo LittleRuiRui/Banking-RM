@@ -28,6 +28,8 @@ jobs:
         run: python -m src.provenance_fixups
       - name: Render RM brief
         run: python -m src.rm_brief
+      - name: Export verified snapshot for web/mobile
+        run: python -m src.web_export
       - name: Upload generated outputs
         uses: actions/upload-artifact@v4
         with:
@@ -35,3 +37,4 @@ jobs:
           path: |
             data/kdb_public_snapshot.json
             reports/kdb_auto_brief.md
+            web/

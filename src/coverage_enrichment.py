@@ -14,7 +14,7 @@ INVESTOR_URL = "https://www.kdb.co.kr/wcmscontents/pdf/IR_Presentation_2025.pdf"
 SOURCE_NAME = "Investor Presentation December 2025"
 PERIOD = "1H25"
 PUBLICATION_PERIOD = "2025-12"
-USER_AGENT = "Banking-RM/0.9 quality-controlled-enrichment"
+USER_AGENT = "Banking-RM/1.0 quality-controlled-enrichment"
 
 
 def pdf_pages(url: str = INVESTOR_URL) -> list[str]:
@@ -32,6 +32,24 @@ def find_page(pages: list[str], heading: str) -> tuple[int, str] | None:
         if heading.lower() in compact(page).lower():
             return i, page
     return None
+
+
+def parse_npl_chart(page_text: str) -> dict:
+    text = compact(page_text)
+    if "NPL Ratio Coverage Ratio" not in text or "1H25" not in text:
+        return {}
+    m = re.search(
+        r"(?P<npl>(?:\d{1,2}\.\d+%\s+){6})(?P<coverage>(?:\d{2,3}\.\d+%\s+){6})2020\s+2021\s+2022\s+2023\s+2024\s+1H25\s+NPL Ratio\s+Coverage Ratio",
+        text,
+        re.I,
+    )
+    if not m:
+        return {}
+    npl = [float(x) for x in re.findall(r"(\d{1,2}\.\d+)%", m.group("npl"))]
+    coverage = [float(x) for x in re.findall(r"(\d{2,3}\.\d+)%", m.group("coverage"))]
+    if len(npl) != 6 or len(coverage) != 6:
+        return {}
+    return {"npl_1h25": npl[-1], "coverage_1h25": coverage[-1], "npl_series": npl, "coverage_series": coverage}
 
 
 def parse_capital_chart(page_text: str) -> dict:
@@ -86,7 +104,6 @@ def parse_financial_summary(page_text: str) -> dict:
 
 
 def annualized_1h25_ratios(fs: dict) -> dict:
-    """Derived, annualized indicators; never present them as KDB-reported ROA/ROE."""
     if not fs:
         return {}
     avg_assets = (fs["assets_2024_krw_bn"] + fs["assets_1h25_krw_bn"]) / 2
@@ -136,8 +153,10 @@ def normalize_official_ratings(snapshot: dict):
 
 
 def enrich(snapshot: dict, pages: list[str]) -> dict:
+    asset_page = find_page(pages, "Asset Quality & Profitability")
     cap_page = find_page(pages, "Capital Adequacy & Recapitalization")
     fs_page = find_page(pages, "Financial Statement Summary")
+    npl = parse_npl_chart(asset_page[1]) if asset_page else {}
     capital = parse_capital_chart(cap_page[1]) if cap_page else {}
     fs = parse_financial_summary(fs_page[1]) if fs_page else {}
     ratios = annualized_1h25_ratios(fs)
@@ -145,6 +164,18 @@ def enrich(snapshot: dict, pages: list[str]) -> dict:
     sources = snapshot.setdefault("metric_sources", {})
     evs = snapshot.setdefault("metric_evidence", {})
     normalize_official_ratings(snapshot)
+
+    if npl and asset_page:
+        metrics["npl_ratio_pct"] = npl["npl_1h25"]
+        sources["npl_ratio_pct"] = source_meta("chart-extracted")
+        evs["npl_ratio_pct"] = evidence(
+            asset_page[0] + 1,
+            "Asset Quality & Profitability",
+            asset_page[1],
+            f"1H25 NPL Ratio {npl['npl_1h25']:.1f}%; Coverage Ratio {npl['coverage_1h25']:.1f}%",
+            "chart-extracted",
+        )
+        snapshot.setdefault("supporting_metrics", {})["npl_coverage_ratio_pct"] = npl["coverage_1h25"]
 
     if capital and cap_page:
         metrics["capital_adequacy_ratio_pct"] = capital["bis_1h25"]
@@ -164,6 +195,11 @@ def enrich(snapshot: dict, pages: list[str]) -> dict:
             f"Total Assets 2024/1H25 KRW {fs['assets_2024_krw_bn']:,.0f}/{fs['assets_1h25_krw_bn']:,.0f}bn; "
             f"Total Equity 2024/1H25 KRW {fs['equity_2024_krw_bn']:,.0f}/{fs['equity_1h25_krw_bn']:,.0f}bn."
         )
+        snapshot.setdefault("supporting_metrics", {}).update({
+            "profit_1h25_krw_bn": fs["profit_1h25_krw_bn"],
+            "total_assets_1h25_krw_bn": fs["assets_1h25_krw_bn"],
+            "total_equity_1h25_krw_bn": fs["equity_1h25_krw_bn"],
+        })
         for key, label, formula in (
             ("roa_pct", "ROA", "2 × 1H25 profit / average(2024, 1H25 total assets)"),
             ("roe_pct", "ROE", "2 × 1H25 profit / average(2024, 1H25 total equity)"),
@@ -181,7 +217,6 @@ def enrich(snapshot: dict, pages: list[str]) -> dict:
     flags = []
     cet1 = metrics.get("cet1_ratio_pct")
     tier1 = snapshot.get("supporting_metrics", {}).get("tier1_ratio_pct")
-    # Both are 13.9% at 1H25 in the Dec-2025 presentation; flag only a real inconsistency.
     if cet1 is not None and tier1 is not None and cet1 > tier1 + 0.01:
         flags.append({
             "severity": "warning",

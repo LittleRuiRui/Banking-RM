@@ -22,14 +22,21 @@
       "kind": "official_funding",
       "reporting_period": "current",
       "section": "Funding Programmes"
+    },
+    {
+      "name": "KDB Sustainability and Investor Newsletter",
+      "url": "https://www.kdb.co.kr/CHGLIR05N00.act?JEX_LANG=EN&_mnuId=IHIHEN0028",
+      "kind": "html",
+      "reporting_period": "2026",
+      "section": "Investor Newsletter"
     }
   ],
   "seed_pdfs": [
     {
-      "name": "Investor Presentation July 2025",
-      "url": "https://www.kdb.co.kr/wcmscontents/pdf/KDB_Investor_Presentation_July_2025.pdf",
+      "name": "Investor Presentation December 2025",
+      "url": "https://www.kdb.co.kr/wcmscontents/pdf/IR_Presentation_2025.pdf",
       "kind": "investor_presentation",
-      "reporting_period": "2025-07"
+      "reporting_period": "2025-12"
     }
   ]
 }

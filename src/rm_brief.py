@@ -17,17 +17,32 @@ def fmt_bn(value):
     return "n/a" if value is None else f"US${value:g}bn"
 
 
-def infer_credit(metrics: dict) -> list[str]:
+def source_name(snapshot: dict, key: str) -> str:
+    source = snapshot.get("metric_sources", {}).get(key)
+    return "n/a" if not source else source.get("name", "source")
+
+
+def infer_credit(snapshot: dict) -> list[str]:
+    metrics = snapshot["metrics"]
     notes = []
     if metrics.get("cet1_ratio_pct") is not None:
-        notes.append(f"CET1 detected at {fmt_pct(metrics['cet1_ratio_pct'])}; verify against the source page before use.")
+        notes.append(
+            f"CET1 detected at {fmt_pct(metrics['cet1_ratio_pct'])} from {source_name(snapshot, 'cet1_ratio_pct')}; treat the source date as part of the fact."
+        )
     else:
         notes.append("CET1 was not confidently extracted; manual verification required.")
     if metrics.get("npl_ratio_pct") is not None:
-        notes.append(f"NPL ratio detected at {fmt_pct(metrics['npl_ratio_pct'])}; trend analysis should be added once multi-year data is available.")
+        notes.append(
+            f"NPL ratio detected at {fmt_pct(metrics['npl_ratio_pct'])} from {source_name(snapshot, 'npl_ratio_pct')}; do not mix it with older annual-report figures."
+        )
     else:
         notes.append("NPL ratio was not confidently extracted; do not infer a figure.")
-    notes.append("For KDB, sovereign linkage and government support remain first-order credit considerations alongside capital, asset quality and market access.")
+    if metrics.get("ratings_detected"):
+        notes.append(
+            "Current-source ratings detected: " + ", ".join(metrics["ratings_detected"]) + ". KDB's sovereign linkage and statutory government support remain first-order credit considerations."
+        )
+    else:
+        notes.append("Ratings were not confidently extracted from the current investor source.")
     return notes
 
 
@@ -36,19 +51,19 @@ def opportunity_rows(metrics: dict) -> list[dict]:
     if any(metrics.get(k) is not None for k in ("gmt_programme_usd_bn", "uscp_programme_usd_bn", "ecp_programme_usd_bn")):
         rows.append({
             "theme": "Offshore funding / DCM",
-            "why": "KDB maintains international funding programmes and is a recurring issuer.",
+            "why": "KDB maintains international funding programmes and is a recurring issuer. Funding is therefore both a liquidity topic and a wallet opportunity.",
             "products": "DCM, bond investment, bilateral funding, money market, FX/CCS",
             "question": "How are you thinking about the mix between benchmark issuance and opportunistic/private placements over the next 12–18 months?",
         })
     rows.append({
         "theme": "Cross-border project / syndicated finance",
-        "why": "KDB's policy mandate and Korean corporate franchise can create overseas financing pipelines.",
+        "why": "KDB's policy mandate and Korean corporate franchise can create overseas financing pipelines, especially where an international bank contributes local balance sheet or network access.",
         "products": "Project finance, syndication, risk participation, guarantees",
         "question": "Where are you seeing the strongest need for international-bank participation in KDB-led financings?",
     })
     rows.append({
         "theme": "Relationship diversification",
-        "why": "The objective is to understand what KDB values when allocating wallet to external banks.",
+        "why": "The objective is to discover the criteria KDB actually uses when allocating wallet to external banks.",
         "products": "Treasury, deposits, cross-border referrals, transaction banking",
         "question": "For recent offshore transactions, what has mattered most when selecting banking partners: pricing, balance sheet, distribution, or regional network?",
     })
@@ -57,30 +72,36 @@ def opportunity_rows(metrics: dict) -> list[dict]:
 
 def render(snapshot: dict) -> str:
     m = snapshot["metrics"]
-    credit = "\n".join(f"- {x}" for x in infer_credit(m))
+    credit = "\n".join(f"- {x}" for x in infer_credit(snapshot))
     opps = "\n".join(
         f"### {i+1}. {o['theme']}\n**Why it matters:** {o['why']}\n\n**Potential products:** {o['products']}\n\n**Discovery question:** {o['question']}"
         for i, o in enumerate(opportunity_rows(m))
     )
     sources = "\n".join(f"- [{s['name']}]({s['url']}) — {s['kind']}" for s in snapshot["sources"])
+
+    metric_rows = [
+        ("CET1", fmt_pct(m.get("cet1_ratio_pct")), source_name(snapshot, "cet1_ratio_pct")),
+        ("Capital adequacy", fmt_pct(m.get("capital_adequacy_ratio_pct")), source_name(snapshot, "capital_adequacy_ratio_pct")),
+        ("NPL ratio", fmt_pct(m.get("npl_ratio_pct")), source_name(snapshot, "npl_ratio_pct")),
+        ("ROE", fmt_pct(m.get("roe_pct")), source_name(snapshot, "roe_pct")),
+        ("ROA", fmt_pct(m.get("roa_pct")), source_name(snapshot, "roa_pct")),
+        ("GMTN programme", fmt_bn(m.get("gmt_programme_usd_bn")), source_name(snapshot, "gmt_programme_usd_bn")),
+        ("USCP programme", fmt_bn(m.get("uscp_programme_usd_bn")), source_name(snapshot, "uscp_programme_usd_bn")),
+        ("ECP programme", fmt_bn(m.get("ecp_programme_usd_bn")), source_name(snapshot, "ecp_programme_usd_bn")),
+    ]
+    metric_table = "\n".join(f"| {label} | {value} | {src} |" for label, value, src in metric_rows)
+
     return f"""# KDB RM Intelligence Brief — Auto-generated prototype
 **Generated:** {snapshot['generated_at']}  
 **Client:** {snapshot['client']}
 
-> Prototype note: all extracted figures must be source-verified before external or credit use. Missing values are intentionally left as `n/a` rather than inferred.
+> Prototype note: extracted figures are only as current as their cited source. Missing values remain `n/a`; historical and current documents are not blended without attribution.
 
 ## 1. Credit Intelligence
 
-| Metric | Extracted value |
-|---|---:|
-| CET1 | {fmt_pct(m.get('cet1_ratio_pct'))} |
-| Capital adequacy | {fmt_pct(m.get('capital_adequacy_ratio_pct'))} |
-| NPL ratio | {fmt_pct(m.get('npl_ratio_pct'))} |
-| ROE | {fmt_pct(m.get('roe_pct'))} |
-| ROA | {fmt_pct(m.get('roa_pct'))} |
-| GMTN programme | {fmt_bn(m.get('gmt_programme_usd_bn'))} |
-| USCP programme | {fmt_bn(m.get('uscp_programme_usd_bn'))} |
-| ECP programme | {fmt_bn(m.get('ecp_programme_usd_bn'))} |
+| Metric | Extracted value | Source used |
+|---|---:|---|
+{metric_table}
 
 ### RM interpretation
 {credit}
@@ -99,6 +120,12 @@ Use three moves:
    “My impression is that USD remains core, but diversification has become more important. Is that still fair?”
 3. **Move from market → client → implication.**  
    “Long-end USD yields have stayed elevated. Has that changed how you think about tenor? If so, where would you want more support from banking partners?”
+
+### Four things the RM should leave the meeting knowing
+- What changed in KDB's 12–18 month foreign-currency funding plan?
+- Which overseas sectors/geographies are generating the strongest financing pipeline?
+- Where does KDB actively want international-bank participation?
+- What criteria determine wallet allocation to banking partners?
 
 ## 4. Sources
 

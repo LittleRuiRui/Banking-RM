@@ -7,6 +7,7 @@ import streamlit as st
 
 from src.upload_ingest import extract_uploaded_file, build_source_pack
 from src.rule_customizer import apply_text_rules
+from src.fi_credit_checker import check_credit_application
 
 ROOT = Path(__file__).resolve().parent
 SNAPSHOT = ROOT / "data" / "kdb_public_snapshot.json"
@@ -37,7 +38,7 @@ def card(label, value, note=""):
 
 with st.sidebar:
     st.markdown("## 🏦 RM Intelligence")
-    workspace = st.radio("Workspace", ["KDB Demo", "New Institution", "Customize Report"], label_visibility="collapsed")
+    workspace = st.radio("Workspace", ["KDB Demo", "FI Credit Checklist", "New Institution", "Customize Report"], label_visibility="collapsed")
     st.divider()
     st.caption("Public-source intelligence. Missing beats guessed. Metric freshness and source freshness are shown separately.")
 
@@ -55,7 +56,9 @@ if workspace == "KDB Demo":
     with c3: card("Latest Annual Report", status.get("latest_annual_report",{}).get("period","unknown"), "Official KDB source")
     with c4: card("Latest Investor Update", status.get("latest_investor_update",{}).get("period","unknown"), "Separate from financial reporting period")
 
-    st.info("Latest public source and latest metric period are different concepts. A 2026 investor update does not turn an FY2024 ratio into a 2026 ratio. Each metric below keeps its own verified reporting period.")
+    if status.get("source_check_status") == "temporarily_unavailable":
+        st.warning("Latest-source check was temporarily unavailable. The app retained the last verified source status instead of replacing it with guesses.")
+    st.info("Latest public source and latest metric period are different concepts. Each metric keeps its own verified reporting period.")
 
     overview, credit, current, funding, meeting, evidence = st.tabs(["Overview","Credit","Current Developments","Funding & Business","Meeting Playbook","Evidence & Download"])
 
@@ -66,7 +69,6 @@ if workspace == "KDB Demo":
             x=status.get(key,{})
             rows.append({"source":label,"latest period":x.get("period","unknown"),"verified":x.get("verified_on_official_page", True),"url":x.get("url","")})
         st.dataframe(rows,use_container_width=True,hide_index=True)
-
         st.markdown("### Latest verified metric periods")
         if metric_periods:
             st.dataframe([{"metric":k,"latest verified period":v} for k,v in metric_periods.items()],use_container_width=True,hide_index=True)
@@ -79,15 +81,12 @@ if workspace == "KDB Demo":
         if isinstance(metrics,dict):
             rows=[]
             for k,v in metrics.items():
-                if k=="ratings_detected":
-                    rows.append({"metric":"Ratings","value":", ".join(v) if isinstance(v,list) else v,"period":metric_periods.get(k,"current")})
-                else:
-                    rows.append({"metric":k,"value":v,"period":metric_periods.get(k,"unknown")})
+                if k=="ratings_detected": rows.append({"metric":"Ratings","value":", ".join(v) if isinstance(v,list) else v,"period":metric_periods.get(k,"current")})
+                else: rows.append({"metric":k,"value":v,"period":metric_periods.get(k,"unknown")})
             st.dataframe(rows,use_container_width=True,hide_index=True)
         else:
             st.dataframe(metrics,use_container_width=True,hide_index=True)
-        for flag in snap.get("consistency_flags",[]):
-            st.warning(flag.get("detail",str(flag)))
+        for flag in snap.get("consistency_flags",[]): st.warning(flag.get("detail",str(flag)))
 
     with current:
         st.markdown("### 2026 Current Developments")
@@ -97,7 +96,7 @@ if workspace == "KDB Demo":
                 st.markdown(f"**{u.get('topic','Update').title()}**")
                 st.caption(u.get("evidence_snippet",""))
         else:
-            st.info("The official 2026 investor-update source is tracked, but no safe text snippets were parsed into the current snapshot yet. The pipeline will not fabricate developments.")
+            st.info("The official 2026 investor-update source is tracked, but no safe text snippets were parsed into the current snapshot yet.")
 
     with funding:
         st.markdown("### Funding & Business Intelligence")
@@ -113,21 +112,42 @@ if workspace == "KDB Demo":
 
     with meeting:
         st.markdown("### Meeting Discovery Playbook")
-        questions=snap.get("meeting_questions") or [
-            "What has changed in your offshore funding plan versus last year?",
-            "Which currencies and tenors are currently most attractive at the margin?",
-            "Where is international-bank participation most useful in KDB-led overseas financings?",
-            "Which sectors or geographies are taking more management attention in 2026?",
-        ]
+        questions=snap.get("meeting_questions") or ["What has changed in your offshore funding plan versus last year?","Which currencies and tenors are currently most attractive at the margin?","Where is international-bank participation most useful in KDB-led overseas financings?","Which sectors or geographies are taking more management attention in 2026?"]
         for i,qx in enumerate(questions,1): st.markdown(f"**{i}.** {qx}")
 
     with evidence:
         st.markdown("### Evidence & downloads")
         st.download_button("Download snapshot (.json)",json.dumps(snap,indent=2,ensure_ascii=False),file_name="kdb_latest_snapshot.json",mime="application/json",use_container_width=True)
-        if report:
-            st.download_button("Download RM report (.md)",report,file_name="kdb_rm_intelligence.md",mime="text/markdown",use_container_width=True)
+        if report: st.download_button("Download RM report (.md)",report,file_name="kdb_rm_intelligence.md",mime="text/markdown",use_container_width=True)
         st.markdown("#### Metric evidence")
         st.json(snap.get("metric_evidence",{}))
+
+elif workspace == "FI Credit Checklist":
+    st.markdown('<div class="hero"><h2 style="margin:0">FI Credit Application Checker</h2><div class="muted">Upload a credit application and run the 18-module completeness / freshness / internal-required check before submission.</div></div>', unsafe_allow_html=True)
+    credit_file = st.file_uploader("Upload FI credit application", type=["pdf","txt","md"], key="fi_credit")
+    if credit_file:
+        try:
+            doc = extract_uploaded_file(credit_file)
+            result = check_credit_application(doc["text"])
+            st.success(f"Checked {credit_file.name}. Latest year detected in document: {result.get('latest_year_detected') or 'unknown'}")
+            if result.get("entity_scope_warning"): st.warning(result["entity_scope_warning"])
+            st.dataframe(result["rows"], use_container_width=True, hide_index=True)
+            st.markdown("### Gap List")
+            for bucket in ["Blocking before submission","Should update","Nice to improve"]:
+                items=result["gap_list"].get(bucket,[])
+                with st.expander(f"{bucket} ({len(items)})", expanded=(bucket=="Blocking before submission")):
+                    if items:
+                        for item in items: st.markdown(f"- {item}")
+                    else: st.caption("No items detected")
+            st.markdown("### Critical stale fields")
+            if result["outdated_critical_fields"]:
+                st.dataframe(result["outdated_critical_fields"], use_container_width=True, hide_index=True)
+            else:
+                st.caption("No clearly stale critical fields detected by the first-pass checker.")
+            st.info("Internal-only fields are never guessed. Missing internal rating, KYC/AML, exposure, country limit, concentration, approval authority, RAROC/EVA, FTP income and pipeline are flagged as INTERNAL REQUIRED.")
+            st.download_button("Download gap analysis (.json)", json.dumps(result,indent=2,ensure_ascii=False), file_name="fi_credit_gap_analysis.json", mime="application/json", use_container_width=True)
+        except Exception as exc:
+            st.error(f"Could not analyze file: {exc}")
 
 elif workspace == "New Institution":
     st.markdown('<div class="hero"><h2 style="margin:0">Analyze another institution</h2><div class="muted">Upload official source documents first; institution-specific validation rules are required before ratios are treated as credit-grade.</div></div>', unsafe_allow_html=True)

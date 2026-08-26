@@ -1,0 +1,54 @@
+{
+  "client": "Korea Development Bank",
+  "generated_at": "2026-08-26T04:57:21Z",
+  "data_quality": {
+    "reliability_score_out_of_10": 9.5,
+    "coverage_pct": 100.0
+  },
+  "freshness": {
+    "latest_core_ir_publication": "2025-12",
+    "age_days_approx": 268,
+    "status": "stale"
+  },
+  "metrics": [
+    {"metric":"CET1","value":"13.90%","period":"2024-12","source":"Investor Presentation July 2025","method":"extracted","reliability":"High"},
+    {"metric":"BIS capital ratio","value":"13.90%","period":"2024","source":"Investor Presentation July 2025","method":"chart-extracted","reliability":"Review"},
+    {"metric":"NPL ratio","value":"0.60%","period":"2024-12","source":"Investor Presentation July 2025","method":"extracted","reliability":"High"},
+    {"metric":"ROE","value":"4.87%","period":"2024","source":"Investor Presentation July 2025","method":"derived","reliability":"Medium"},
+    {"metric":"ROA","value":"0.61%","period":"2024","source":"Investor Presentation July 2025","method":"derived","reliability":"Medium"},
+    {"metric":"Moody's","value":"Aa2 / Stable","period":"current","source":"KDB Ratings","method":"official","reliability":"High"},
+    {"metric":"S&P","value":"AA / Stable","period":"current","source":"KDB Ratings","method":"official","reliability":"High"},
+    {"metric":"Fitch","value":"AA- / Stable","period":"current","source":"KDB Ratings","method":"official","reliability":"High"}
+  ],
+  "funding": [
+    {"item":"GMTN Programme","value":"US$30bn","source":"KDB Funding Programmes"},
+    {"item":"USCP Programme","value":"US$5bn","source":"KDB Funding Programmes"},
+    {"item":"ECP Programme","value":"US$12bn","source":"KDB Funding Programmes"},
+    {"item":"Wholesale funding share","value":"68%","source":"Investor Presentation July 2025"},
+    {"item":"Foreign-currency bonds outstanding","value":"US$32.4bn eq.","source":"Investor Presentation Dec 2025"},
+    {"item":"USD share of FC bonds outstanding","value":"65.2%","source":"Investor Presentation Dec 2025"},
+    {"item":"2025 funding target","value":"US$10bn eq.","source":"Investor Presentation Dec 2025"},
+    {"item":"2025 achieved by 2 Dec","value":"US$9.9bn","source":"Investor Presentation Dec 2025"}
+  ],
+  "sector_exposure": [
+    {"sector":"Manufacturing","pct":45.3},
+    {"sector":"Finance & Insurance","pct":24.4},
+    {"sector":"Transportation","pct":6.6},
+    {"sector":"Utilities","pct":3.5},
+    {"sector":"Public Administration","pct":0.5},
+    {"sector":"Others","pct":19.7}
+  ],
+  "opportunities": [
+    {"priority":"High","theme":"2026 FX funding / DCM","why":"USD remains the dominant foreign-currency funding market; 2025 target was essentially completed by Dec 2025.","action":"Ask what changed in 2026 size, currency and tenor preference; test DCM, bilateral and FX/CCS appetite."},
+    {"priority":"High","theme":"Relationship-bank / bilateral funding","why":"KDB identifies relationship-based bank loans as a backstop funding source.","action":"Understand when KDB values balance sheet support versus capital-markets execution."},
+    {"priority":"Medium","theme":"ASEAN project / syndicated finance","why":"Manufacturing is 45.3% of operating exposure and Korean outbound investment can create regional financing needs.","action":"Probe ASEAN country/sector pipeline, desired partner-bank role and local-network gaps."}
+  ],
+  "meeting_questions": [
+    "What has changed in KDB's 2026 offshore funding plan versus 2025 — size, tenor or currency mix?",
+    "At current USD levels, are EUR, GBP, AUD or other currencies becoming more attractive after hedging?",
+    "Where is international-bank participation most useful in KDB-led financings: balance sheet, distribution, local network or execution?",
+    "Which ASEAN countries or sectors are taking the most attention from Korean corporate clients this year?",
+    "When allocating wallet to external banks, what has become more important versus last year?"
+  ],
+  "warning": "KDB's July-2025 presentation contains a CET1 / Tier-1 presentation inconsistency. The affected capital figure should be manually verified before credit-decision use."
+}

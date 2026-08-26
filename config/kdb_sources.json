@@ -4,26 +4,32 @@
     {
       "name": "Annual Reports",
       "url": "https://www.kdb.co.kr/BZCOWS00N00.act?_mnuId=IHIHEN0024&wcmsPath=%2Fhmp%2Fch%2Fgl%2Fir%2FCHGLIR0100.html",
-      "keywords": ["2025 annual report"]
+      "keywords": ["2025 annual report"],
+      "reporting_period": "2025"
     }
   ],
   "authoritative_html": [
     {
       "name": "KDB International Credit Ratings",
       "url": "https://www.kdb.co.kr/BZCOWS00N00.act?_mnuId=IHIHEN0025&wcmsPath=%2Fhmp%2Fch%2Fgl%2Fir%2FCHGLIR0200.html",
-      "kind": "official_ratings"
+      "kind": "official_ratings",
+      "reporting_period": "current",
+      "section": "International Credit Ratings"
     },
     {
       "name": "KDB Funding Programmes",
       "url": "https://www.kdb.co.kr/BZCOWS00N00.act?_mnuId=IHIHEN0073&wcmsPath=%2Fhmp%2Fch%2Fgl%2Fir%2FCHGLIR0700.html",
-      "kind": "official_funding"
+      "kind": "official_funding",
+      "reporting_period": "current",
+      "section": "Funding Programmes"
     }
   ],
   "seed_pdfs": [
     {
       "name": "Investor Presentation July 2025",
       "url": "https://www.kdb.co.kr/wcmscontents/pdf/KDB_Investor_Presentation_July_2025.pdf",
-      "kind": "investor_presentation"
+      "kind": "investor_presentation",
+      "reporting_period": "2025-07"
     }
   ]
 }

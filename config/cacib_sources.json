@@ -1,0 +1,60 @@
+{
+  "institution": "Credit Agricole Corporate and Investment Bank",
+  "credit_subject": "Credit Agricole Corporate and Investment Bank, Singapore Branch",
+  "entity_hierarchy": [
+    "Credit Agricole Group",
+    "Credit Agricole S.A. (CASA)",
+    "Credit Agricole Corporate and Investment Bank (CACIB)",
+    "CACIB Singapore Branch"
+  ],
+  "sources": [
+    {
+      "id": "cacib_h1_2026",
+      "name": "CACIB Financial results for Q2 and H1 2026",
+      "entity": "CACIB",
+      "reporting_period": "H1 2026",
+      "publication_date": "2026-07-31",
+      "source_type": "PUBLIC VERIFIED",
+      "url": "https://www.ca-cib.com/en/document-search?document_category=financial-publications",
+      "best_for": ["current performance", "revenue", "net income", "business-line performance", "current management commentary"]
+    },
+    {
+      "id": "cacib_urd_2025",
+      "name": "CACIB 2025 Universal Registration Document",
+      "entity": "CACIB",
+      "reporting_period": "FY2025",
+      "publication_date": "2026-03-27",
+      "source_type": "PUBLIC VERIFIED",
+      "url": "https://www.ca-cib.com/sites/default/files/2026-03/URD_CACIB_2025_ENG_0.pdf",
+      "best_for": ["balance sheet", "capital", "RWA", "asset quality", "Stage 1/2/3", "NPL", "provisions", "sector exposure", "geographic exposure", "liabilities", "liquidity", "cash flow", "governance", "risk management"]
+    },
+    {
+      "id": "cacib_financial_publications",
+      "name": "CACIB Financial Publications index",
+      "entity": "CACIB",
+      "reporting_period": "current",
+      "publication_date": "current",
+      "source_type": "PUBLIC VERIFIED",
+      "url": "https://www.ca-cib.com/en/financial-and-regulated-information",
+      "best_for": ["latest publication discovery", "quarterly and half-year updates"]
+    },
+    {
+      "id": "cacib_compliance",
+      "name": "CACIB Compliance Documents index",
+      "entity": "CACIB",
+      "reporting_period": "current",
+      "publication_date": "current",
+      "source_type": "PUBLIC VERIFIED",
+      "url": "https://www.ca-cib.com/en/document-search?document_category=compliance-documents",
+      "best_for": ["public compliance disclosures", "ethics", "complaints", "conduct"]
+    }
+  ],
+  "source_taxonomy": [
+    "PUBLIC VERIFIED",
+    "PUBLIC SECONDARY",
+    "INTERNAL POLICY",
+    "INTERNAL CLIENT",
+    "ANALYST ASSUMPTION"
+  ],
+  "policy": "Latest does not mean blindly newest. Use the latest comparable disclosure for the correct entity and reporting basis. Never substitute CASA or Credit Agricole Group metrics for CACIB without an explicit parent-support or group-context label."
+}

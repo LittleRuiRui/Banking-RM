@@ -17,7 +17,7 @@ from pypdf import PdfReader
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / "config" / "kdb_sources.json"
 DEFAULT_OUTPUT = ROOT / "data" / "kdb_public_snapshot.json"
-USER_AGENT = "Banking-RM/0.2 public-data-research"
+USER_AGENT = "Banking-RM/0.3 public-data-research"
 
 
 @dataclass
@@ -35,6 +35,7 @@ METRIC_PATTERNS = {
     ],
     "capital_adequacy_ratio_pct": [
         r"(?:BIS\s+)?capital adequacy ratio\s*[:：]?\s*(\d{1,2}\.\d{1,2})\s*%",
+        r"total capital(?: adequacy)? ratio\s*[:：]?\s*(\d{1,2}\.\d{1,2})\s*%",
     ],
     "npl_ratio_pct": [
         r"(?:NPL|non[- ]performing loan)\s+ratio\s*[:：]?\s*(\d{1,2}\.\d{1,2})\s*%",
@@ -47,14 +48,21 @@ METRIC_PATTERNS = {
     ],
 }
 
+# KDB documents use both "US$" and "U$". Permit text between the programme
+# name and size because PDF extraction often inserts line breaks / labels.
 PROGRAMME_PATTERNS = {
-    "gmt_programme_usd_bn": r"(?:GMTN|Global Medium Term Note)[^\n]{0,120}?US\$?\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
-    "uscp_programme_usd_bn": r"USCP[^\n]{0,120}?US\$?\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
-    "ecp_programme_usd_bn": r"ECP[^\n]{0,120}?US\$?\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
+    "gmt_programme_usd_bn": [
+        r"(?:GMTN|Global Medium Term Note)[\s\S]{0,220}?(?:programme\s+size\s+of\s+)?U?S?\$\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
+        r"U?S?\$\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)[\s\S]{0,120}?(?:GMTN|Global Medium Term Note)",
+    ],
+    "uscp_programme_usd_bn": [
+        r"USCP[\s\S]{0,180}?(?:programme\s+size\s+of\s+)?U?S?\$\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
+    ],
+    "ecp_programme_usd_bn": [
+        r"(?:^|\s)ECP[\s\S]{0,180}?(?:programme\s+size\s+of\s+)?U?S?\$\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
+    ],
 }
 
-# Do not use a trailing word-boundary here: ratings such as AA- end in a
-# non-word character, so `\b` would let the engine backtrack and return AA.
 RATING_PATTERN = re.compile(
     r"(?<![A-Za-z0-9])(?:Aaa|Aa[123]|Baa[123]|AAA|AA[+-]?|A[+-]?|BBB[+-]?|A[123])(?![A-Za-z0-9+-])",
     re.IGNORECASE,
@@ -117,9 +125,8 @@ def first_float(text: str, patterns: list[str]) -> float | None:
 
 def parse_metrics(text: str) -> dict:
     values = {name: first_float(text, patterns) for name, patterns in METRIC_PATTERNS.items()}
-    for name, pattern in PROGRAMME_PATTERNS.items():
-        match = re.search(pattern, text, flags=re.IGNORECASE | re.MULTILINE)
-        values[name] = float(match.group(1)) if match else None
+    for name, patterns in PROGRAMME_PATTERNS.items():
+        values[name] = first_float(text, patterns)
     values["ratings_detected"] = sorted(set(m.group(0).upper() for m in RATING_PATTERN.finditer(text)))
     return values
 
@@ -145,11 +152,16 @@ def collect_documents(config: dict) -> list[SourceDocument]:
     documents: list[SourceDocument] = []
     seen: set[str] = set()
 
+    # Seed PDFs are deliberately first: they are curated current sources and
+    # should outrank older PDFs discovered from archive pages.
     for seed in config.get("seed_pdfs", []):
         url = seed["url"]
         if url in seen:
             continue
-        documents.append(SourceDocument(seed["name"], url, seed.get("kind", "pdf"), extract_pdf_text(s, url)))
+        try:
+            documents.append(SourceDocument(seed["name"], url, seed.get("kind", "pdf"), extract_pdf_text(s, url)))
+        except Exception as exc:
+            documents.append(SourceDocument(seed["name"], url, "pdf_error", f"ERROR: {exc}"))
         seen.add(url)
 
     for page in config.get("source_pages", []):
@@ -175,17 +187,59 @@ def collect_documents(config: dict) -> list[SourceDocument]:
     return documents
 
 
+def choose_metric(documents: list[SourceDocument], metric: str) -> tuple[float | None, dict | None]:
+    """Choose the first confidently extracted metric from source-priority order."""
+    for document in documents:
+        if document.kind.endswith("error"):
+            continue
+        parsed = parse_metrics(document.text)
+        value = parsed.get(metric)
+        if value is not None:
+            return value, {"name": document.name, "url": document.url, "kind": document.kind}
+    return None, None
+
+
+def current_ratings(documents: list[SourceDocument]) -> tuple[list[str], dict | None]:
+    """Prefer ratings found in the curated investor presentation, not every historical PDF."""
+    for document in documents:
+        if document.kind.endswith("error"):
+            continue
+        if "investor" in document.kind.lower() or "investor presentation" in document.name.lower():
+            match = re.search(r"Ratings?[\s\S]{0,350}", document.text, flags=re.IGNORECASE)
+            text = match.group(0) if match else document.text[:8000]
+            ratings = sorted(set(m.group(0).upper() for m in RATING_PATTERN.finditer(text)))
+            if ratings:
+                return ratings, {"name": document.name, "url": document.url, "kind": document.kind}
+    return [], None
+
+
 def build_snapshot(config: dict, documents: list[SourceDocument]) -> dict:
+    metric_names = list(METRIC_PATTERNS) + list(PROGRAMME_PATTERNS)
+    metrics: dict[str, float | list[str] | None] = {}
+    metric_sources: dict[str, dict] = {}
+
+    for metric in metric_names:
+        value, source = choose_metric(documents, metric)
+        metrics[metric] = value
+        if source:
+            metric_sources[metric] = source
+
+    ratings, ratings_source = current_ratings(documents)
+    metrics["ratings_detected"] = ratings
+    if ratings_source:
+        metric_sources["ratings_detected"] = ratings_source
+
     successful_text = "\n".join(d.text for d in documents if not d.kind.endswith("error"))
-    metrics = parse_metrics(successful_text)
     evidence = evidence_snippets(
         successful_text,
         ["government", "funding", "CET1", "NPL", "USD", "GMTN", "USCP", "ECP", "project finance", "Southeast Asia"],
     )
+
     return {
         "client": config["client"],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "metrics": metrics,
+        "metric_sources": metric_sources,
         "evidence": evidence,
         "sources": [
             {"name": d.name, "url": d.url, "kind": d.kind, "characters_extracted": len(d.text)}

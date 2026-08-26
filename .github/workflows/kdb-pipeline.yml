@@ -24,6 +24,8 @@ jobs:
         run: python -m src.kdb_pipeline
       - name: Enrich coverage and run consistency controls
         run: python -m src.coverage_enrichment
+      - name: Correct metric provenance periods
+        run: python -m src.provenance_fixups
       - name: Render RM brief
         run: python -m src.rm_brief
       - name: Upload generated outputs

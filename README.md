@@ -19,12 +19,45 @@ Korea Development Bank (KDB)
 4. **Discovery Playbook** — indirect questions to uncover funding plans, wallet gaps, buying criteria and pipeline.
 5. **Early Warning** — credit deterioration and business triggers.
 
-## Quick start
+## v0.2 automated public-data pipeline
+
+The `kdb-auto-pipeline` branch adds a first end-to-end workflow:
+
+`KDB public pages / PDFs -> PDF & HTML extraction -> structured metrics -> evidence snippets -> RM intelligence brief`
+
+### Run locally
+
 ```bash
-python -m src.report_generator
+python -m pip install -r requirements.txt
+python -m src.kdb_pipeline
+python -m src.rm_brief
 ```
 
-This renders `reports/kdb_rm_intelligence_generated.md` from `data/kdb_sample.json`.
+Outputs:
+- `data/kdb_public_snapshot.json` — structured extraction with source metadata and evidence snippets.
+- `reports/kdb_auto_brief.md` — auto-generated credit, opportunity and meeting brief.
+
+The pipeline intentionally leaves uncertain or missing metrics as `n/a`; it does not invent figures.
+
+### Source configuration
+
+KDB source URLs live in `config/kdb_sources.json`. The collector can:
+- read known investor-presentation PDFs;
+- inspect KDB Annual Report and Funding Programme pages;
+- discover matching PDF links;
+- extract PDF text;
+- detect a first set of credit/funding metrics;
+- retain source URLs and evidence snippets for verification.
+
+### CI
+
+`.github/workflows/kdb-pipeline.yml` runs tests and the full public-data pipeline on pushes and pull requests, then uploads the generated snapshot and RM brief as workflow artifacts.
 
 ## Data principle
-No bank-system API is required for v0.1. Public sources are primary. Internal exposure, limits, revenue and meeting notes are optional manual inputs and should only be used in an approved environment.
+No bank-system API is required for the MVP. Public sources are primary. Internal exposure, limits, revenue and meeting notes are optional manual inputs and should only be used in an approved environment.
+
+## Guardrails
+- Separate extracted facts from RM inference.
+- Do not infer missing financial values.
+- Verify material figures against the source document before credit or client use.
+- Never auto-send client communication or alter internal bank limits/exposures.

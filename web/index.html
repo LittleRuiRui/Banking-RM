@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#101827" />
+  <title>FI RM Intelligence</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">FI RM INTELLIGENCE</div>
+      <h1 id="client-title">Loading…</h1>
+    </div>
+    <div class="quality" id="quality"></div>
+  </header>
+
+  <main class="shell">
+    <section class="hero-card">
+      <div>
+        <span class="pill">Credit</span>
+        <h2 id="credit-view">Loading current verified metrics…</h2>
+        <p id="generated-at" class="muted"></p>
+      </div>
+      <button id="refresh-btn" class="primary">Refresh</button>
+    </section>
+
+    <section>
+      <div class="section-title"><h2>Verified snapshot</h2><span class="muted">Tap a metric for provenance</span></div>
+      <div id="metrics" class="metric-grid"></div>
+    </section>
+
+    <section>
+      <div class="section-title"><h2>RM actions</h2><span class="muted">What matters next</span></div>
+      <div class="action-grid">
+        <article class="card"><h3>Funding</h3><p>Watch benchmark issuance, maturity concentration, currency mix and hedging economics.</p><span class="tag">DCM · Bilateral · FX/CCS</span></article>
+        <article class="card"><h3>Cross-border</h3><p>Look for KDB-linked Korean corporate expansion in ASEAN and the US.</p><span class="tag">PF · Syndication · Guarantees</span></article>
+        <article class="card"><h3>Discovery</h3><p>Use verified facts to uncover pipeline, partner-bank needs and wallet allocation criteria.</p><span class="tag">Meeting intelligence</span></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title"><h2>Meeting discovery</h2><span class="muted">Use 2–3, not all</span></div>
+      <div id="questions" class="question-list"></div>
+    </section>
+
+    <section>
+      <div class="section-title"><h2>Data controls</h2><span class="muted">Reliability before completeness</span></div>
+      <div id="warnings" class="warning-list"></div>
+    </section>
+  </main>
+
+  <dialog id="metric-dialog">
+    <button class="close" id="dialog-close">×</button>
+    <div id="dialog-body"></div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

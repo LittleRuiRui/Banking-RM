@@ -4,7 +4,7 @@ import argparse
 import io
 import json
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
@@ -53,8 +53,10 @@ PROGRAMME_PATTERNS = {
     "ecp_programme_usd_bn": r"ECP[^\n]{0,120}?US\$?\s*(\d+(?:\.\d+)?)\s*(?:bn|billion)",
 }
 
+# Do not use a trailing word-boundary here: ratings such as AA- end in a
+# non-word character, so `\b` would let the engine backtrack and return AA.
 RATING_PATTERN = re.compile(
-    r"\b(Aaa|Aa[123]|A[123]|Baa[123]|AAA|AA[+-]?|A[+-]?|BBB[+-]?)\b",
+    r"(?<![A-Za-z0-9])(?:Aaa|Aa[123]|Baa[123]|AAA|AA[+-]?|A[+-]?|BBB[+-]?|A[123])(?![A-Za-z0-9+-])",
     re.IGNORECASE,
 )
 
